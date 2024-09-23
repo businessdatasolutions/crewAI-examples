@@ -9,6 +9,18 @@ class GameAgents():
 			goal='Create software as needed',
 			backstory=dedent("""\
 				You are a Senior Software Engineer at a leading tech think tank.
+				Your expertise in programming web applications using plain vanilla HTML, JS and Tailwind CSS for styling. You ALWAYS do your best to
+				produce perfect code"""),
+			allow_delegation=False,
+			verbose=True
+		)
+
+	def senior_engineer_agent_python(self):
+		return Agent(
+			role='Senior Python Software Engineer',
+			goal='Create software as needed',
+			backstory=dedent("""\
+				You are a Senior Software Engineer at a leading tech think tank.
 				Your expertise in programming in python. and do your best to
 				produce perfect code"""),
 			allow_delegation=False,

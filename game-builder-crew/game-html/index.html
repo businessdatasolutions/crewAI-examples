@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+        }
+        canvas {
+            background: #111;
+        }
+        .hidden { display: none; }
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            text-align: center;
+        }
+    </style>
+    <title>Space Invaders</title>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div id="gameOver" class="hidden">
+        <h1 class="text-white text-3xl mb-4">Game Over</h1>
+        <button onclick="restartGame()" class="bg-blue-500 text-white py-2 px-4 mb-2">Restart Game</button>
+        <button onclick="quitGame()" class="bg-red-500 text-white py-2 px-4">Quit Game</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const spaceshipImage = new Image();
+        spaceshipImage.src = 'spaceship.png'; // Placeholder for spaceship image
+
+        const asteroidImage = new Image();
+        asteroidImage.src = 'asteroid.png'; // Placeholder for asteroid image
+
+        const alienImage = new Image();
+        alienImage.src = 'alien.png'; // Placeholder for alien image
+
+        const spaceship = { width: 60, height: 60, x: canvas.width / 2 - 30, y: canvas.height - 70, speed: 5 };
+        const keys = { left: false, right: false, space: false };
+        const lasers = [];
+        const enemies = [];
+        let gameRunning = true;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowLeft') keys.left = true;
+            if (e.code === 'ArrowRight') keys.right = true;
+            if (e.code === 'Space') keys.space = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowLeft') keys.left = false;
+            if (e.code === 'ArrowRight') keys.right = false;
+            if (e.code === 'Space') keys.space = false;
+        });
+
+        function spawnEnemy() {
+            const type = Math.random() < 0.5 ? 'asteroid' : 'alien';
+            const image = type === 'asteroid' ? asteroidImage : alienImage;
+            enemies.push({
+                x: Math.random() * (canvas.width - 50),
+                y: -50,
+                width: 50,
+                height: 50,
+                image: image,
+                speed: Math.random() * 2 + 1,
+            });
+        }
+
+        function update() {
+            if (!gameRunning) return;
+
+            if (keys.left && spaceship.x > 0) spaceship.x -= spaceship.speed;
+            if (keys.right && spaceship.x < canvas.width - spaceship.width) spaceship.x += spaceship.speed;
+
+            if (keys.space) {
+                lasers.push({ x: spaceship.x + spaceship.width / 2 - 2.5, y: spaceship.y, width: 5, height: 20, speed: 8 });
+                keys.space = false;
+            }
+
+            lasers.forEach((laser, index) => {
+                laser.y -= laser.speed;
+                if (laser.y < 0) lasers.splice(index, 1);
+            });
+
+            enemies.forEach((enemy, index) => {
+                enemy.y += enemy.speed;
+                if (enemy.y > canvas.height) enemies.splice(index, 1);
+
+                if (collides(spaceship, enemy)) {
+                    endGame();
+                }
+
+                lasers.forEach((laser, laserIndex) => {
+                    if (collides(laser, enemy)) {
+                        enemies.splice(index, 1);
+                        lasers.splice(laserIndex, 1);
+                    }
+                });
+            });
+
+            draw();
+            requestAnimationFrame(update);
+        }
+
+        function collides(a, b) {
+            return a.x < b.x + b.width &&
+                   a.x + a.width > b.x &&
+                   a.y < b.y + b.height &&
+                   a.y + a.height > b.y;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(spaceshipImage, spaceship.x, spaceship.y, spaceship.width, spaceship.height);
+
+            lasers.forEach(laser => {
+                ctx.fillStyle = 'red';
+                ctx.fillRect(laser.x, laser.y, laser.width, laser.height);
+            });
+
+            enemies.forEach(enemy => {
+                ctx.drawImage(enemy.image, enemy.x, enemy.y, enemy.width, enemy.height);
+            });
+        }
+
+        function endGame() {
+            gameRunning = false;
+            document.getElementById('gameOver').classList.remove('hidden');
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').classList.add('hidden');
+            enemies.length = 0;
+            lasers.length = 0;
+            spaceship.x = canvas.width / 2 - 30;
+            gameRunning = true;
+            update();
+        }
+
+        function quitGame() {
+            window.close();
+        }
+
+        setInterval(spawnEnemy, 2000);
+        update();
+    </script>
+</body>
+</html>
